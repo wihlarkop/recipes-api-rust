@@ -1,44 +1,35 @@
-mod entities;
+mod config;
 mod database;
+mod entities;
+mod error;
+mod handlers;
+mod helper;
+mod state;
 
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json, Router, routing::get};
-use sqlx::{query_as, Pool, Postgres};
+use crate::config::Config;
 use crate::database::database_init;
-use crate::entities::Recipe;
-
-#[derive(Debug, Clone)]
-struct AppState {
-    db: Pool<Postgres>,
-}
-
-impl AppState {
-    pub async fn new(db: Pool<Postgres>) -> AppState {
-        Self {
-            db: db.clone(),
-        }
-    }
-}
+use crate::handlers::{create_recipe, delete_recipe, get_all_recipes, get_recipe, update_recipe};
+use crate::state::AppState;
+use axum::{routing::get, Router};
+use envconfig::Envconfig;
 
 #[tokio::main]
 async fn main() {
-    let pool = database_init().await;
+    dotenvy::dotenv().expect("Failed get .env");
+    let config = Config::init_from_env().unwrap();
 
-    let state = AppState::new(pool.unwrap());
+    let pool = database_init(config.database_url).await;
+
+    let state = AppState::new(pool.unwrap()).await;
 
     let app = Router::new()
-        .route("/recipes", get(get_all_recipes))
-        .with_state(state.await);
+        .route("/recipe", get(get_all_recipes).post(create_recipe))
+        .route(
+            "/recipe/:recipe_uuid",
+            get(get_recipe).put(update_recipe).delete(delete_recipe),
+        )
+        .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
-}
-
-async fn get_all_recipes(State(state): State<AppState>) -> impl IntoResponse {
-    match query_as!(Recipe, r#"SELECT * from recipes"#)
-        .fetch_all(&state.db)
-        .await
-    {
-        Ok(recipes) => (StatusCode::OK, Json(recipes)).into_response(),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch recipes").into_response(),
-    }
 }
