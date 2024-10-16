@@ -1,7 +1,8 @@
+use crate::validation;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use validator::{Validate, ValidationError};
+use validator::Validate;
 
 #[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
 pub struct Recipe {
@@ -35,7 +36,7 @@ pub struct InsertRecipe {
     pub cook_time: Option<i32>,
     pub servings: Option<i32>,
 
-    #[validate(custom(function = "validate_difficulty"))]
+    #[validate(custom(function = "validation::validate_difficulty"))]
     pub difficulty_level: Option<String>,
 
     #[serde(skip_deserializing)]
@@ -58,12 +59,4 @@ pub struct UpdateRecipe {
     pub updated_by: String,
     #[serde(skip_deserializing)]
     pub updated_at: DateTime<Utc>,
-}
-
-fn validate_difficulty(difficulty: &String) -> Result<(), ValidationError> {
-    let valid_levels = vec!["easy", "medium", "hard"];
-    if !valid_levels.contains(&difficulty.to_lowercase().as_str()) {
-        return Err(ValidationError::new("invalid_difficulty"));
-    }
-    Ok(())
 }

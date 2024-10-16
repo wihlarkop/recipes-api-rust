@@ -1,6 +1,7 @@
 use crate::entities::{InsertRecipe, Recipe, UpdateRecipe};
 use crate::error::CustomError;
 use crate::helper::create_response;
+use crate::interface::RecipeRepositories;
 use crate::state::AppState;
 use axum::extract::Path;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
@@ -23,14 +24,7 @@ pub async fn get_recipe(
     State(state): State<AppState>,
     Path(recipe_uuid): Path<Uuid>,
 ) -> impl IntoResponse {
-    match query_as!(
-        Recipe,
-        r#"SELECT * FROM recipes WHERE uuid = $1"#,
-        recipe_uuid
-    )
-    .fetch_one(&state.db)
-    .await
-    {
+    match state.get_recipe(recipe_uuid).await {
         Ok(recipe) => (StatusCode::OK, Json(recipe)).into_response(),
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch recipe").into_response(),
     }
