@@ -12,14 +12,19 @@ impl RecipeRepositories for AppState {
             .fetch_all(&self.db)
             .await
     }
-    async fn get_recipe(&self, recipe_uuid: Uuid) -> Result<Recipe, sqlx::Error> {
-        query_as!(
+    async fn get_recipe(&self, recipe_uuid: Uuid) -> Result<Recipe, CustomError> {
+        match query_as!(
             Recipe,
             r#"SELECT * FROM recipes WHERE uuid = $1"#,
             recipe_uuid
         )
         .fetch_one(&self.db)
         .await
+        {
+            Ok(recipe) => Ok(recipe),
+            Err(sqlx::Error::RowNotFound) => Err(CustomError::RecipeNotFound),
+            Err(_) => Err(CustomError::FailedGetRecipe),
+        }
     }
 
     async fn create_recipe(&self, recipe: Recipe) -> Result<(), CustomError> {

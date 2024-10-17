@@ -12,13 +12,13 @@ mod validation;
 use crate::config::Config;
 use crate::database::database_init;
 use crate::handlers::{create_recipe, delete_recipe, get_all_recipes, get_recipe, update_recipe};
+use crate::helper::shutdown_signal;
 use crate::state::AppState;
 use axum::{routing::get, Router};
 use envconfig::Envconfig;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
-use crate::helper::shutdown_signal;
 
 #[tokio::main]
 async fn main() {
@@ -43,5 +43,8 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
 
     let listener = TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).with_graceful_shutdown(shutdown_signal()).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
 }

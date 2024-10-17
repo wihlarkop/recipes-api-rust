@@ -15,6 +15,15 @@ pub enum CustomError {
 
     #[error("Failed to delete recipe")]
     FailedDeleteRecipe,
+
+    #[error("Failed to fetch recipes")]
+    FailedGetRecipes,
+
+    #[error("Failed to fetch recipe")]
+    FailedGetRecipe,
+
+    #[error("Recipe Not Found")]
+    RecipeNotFound,
 }
 
 impl IntoResponse for CustomError {
@@ -24,6 +33,9 @@ impl IntoResponse for CustomError {
             CustomError::FailedInsertRecipe => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::FailedUpdateRecipe => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::FailedDeleteRecipe => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::FailedGetRecipe => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::FailedGetRecipes => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::RecipeNotFound => StatusCode::NOT_FOUND,
         };
 
         let error_message = self.to_string();

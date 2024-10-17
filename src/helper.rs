@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, Json, response::Response};
+use axum::{http::StatusCode, response::IntoResponse, response::Response, Json};
 use serde_json::json;
 use tokio::signal;
 
@@ -13,7 +13,6 @@ where
 
     (status, Json(body)).into_response()
 }
-
 
 pub async fn shutdown_signal() {
     let ctrl_c = async {

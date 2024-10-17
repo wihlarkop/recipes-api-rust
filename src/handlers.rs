@@ -1,4 +1,4 @@
-use crate::entities::{InsertRecipe, UpdateRecipe};
+use crate::entities::{InsertRecipe, Recipe, UpdateRecipe};
 use crate::error::CustomError;
 use crate::helper::create_response;
 use crate::interface::RecipeRepositories;
@@ -9,20 +9,35 @@ use chrono::Utc;
 use uuid::Uuid;
 use validator::Validate;
 
-pub async fn get_all_recipes(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn get_all_recipes(
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, CustomError> {
     match state.get_recipes().await {
-        Ok(recipes) => create_response(StatusCode::OK, Some(recipes), "successfully get recipes").into_response(),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch recipes").into_response(),
+        Ok(recipes) => Ok(create_response(
+            StatusCode::OK,
+            Some(recipes),
+            "successfully get recipes",
+        )),
+        Err(_) => Err(CustomError::FailedGetRecipes),
     }
 }
 
 pub async fn get_recipe(
     State(state): State<AppState>,
     Path(recipe_uuid): Path<Uuid>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, CustomError> {
     match state.get_recipe(recipe_uuid).await {
-        Ok(recipe) => create_response(StatusCode::OK, Some(recipe), "successfully get recipe").into_response(),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, "Failed to fetch recipe").into_response(),
+        Ok(recipe) => Ok(create_response(
+            StatusCode::OK,
+            Some(recipe),
+            "successfully get recipes",
+        )),
+        Err(CustomError::RecipeNotFound) => Ok(create_response(
+            StatusCode::NOT_FOUND,
+            None::<Recipe>,
+            "Recipe Not Found",
+        )),
+        Err(_) => Err(CustomError::FailedGetRecipe),
     }
 }
 
@@ -60,7 +75,11 @@ pub async fn update_recipe(
     payload.updated_by = "system".to_string();
 
     match state.update_recipe(payload.into()).await {
-        Ok(_) => Ok(create_response(StatusCode::OK, None::<String>, "Successfully update recipe")),
+        Ok(_) => Ok(create_response(
+            StatusCode::OK,
+            None::<String>,
+            "Successfully update recipe",
+        )),
         Err(_) => Err(CustomError::FailedUpdateRecipe),
     }
 }
@@ -70,7 +89,11 @@ pub async fn delete_recipe(
     Path(recipe_uuid): Path<Uuid>,
 ) -> Result<impl IntoResponse, CustomError> {
     match state.delete_recipe(recipe_uuid).await {
-        Ok(_) => Ok(create_response(StatusCode::OK, None::<String>, "Successfully delete recipe")),
+        Ok(_) => Ok(create_response(
+            StatusCode::OK,
+            None::<String>,
+            "Successfully delete recipe",
+        )),
         Err(_) => Err(CustomError::FailedDeleteRecipe),
     }
 }
