@@ -2,25 +2,31 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 
-#[derive(thiserror::Error, Debug, Clone)]
+#[derive(thiserror::Error, Debug)]
 pub enum CustomError {
-    #[error("{0} is invalid difficulty level")]
+    #[error("{0} is an invalid difficulty level")]
     InvalidDifficulty(String),
-    #[error("failed insert recipe")]
-    FailedInsertDataRecipe,
+
+    #[error("Failed to insert recipe")]
+    FailedInsertRecipe,
+
+    #[error("Failed to update recipe")]
+    FailedUpdateRecipe,
+
+    #[error("Failed to delete recipe")]
+    FailedDeleteRecipe,
 }
 
 impl IntoResponse for CustomError {
     fn into_response(self) -> Response {
-        let (status, error_message) = match self {
-            CustomError::InvalidDifficulty(level) => (
-                StatusCode::BAD_REQUEST,
-                format!("{} is invalid difficulty level", level),
-            ),
-            CustomError::FailedInsertDataRecipe => {
-                (StatusCode::BAD_REQUEST, "failed insert recipe".to_string())
-            }
+        let status = match self {
+            CustomError::InvalidDifficulty(_) => StatusCode::BAD_REQUEST,
+            CustomError::FailedInsertRecipe => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::FailedUpdateRecipe => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::FailedDeleteRecipe => StatusCode::INTERNAL_SERVER_ERROR,
         };
+
+        let error_message = self.to_string();
 
         (status, Json(error_message)).into_response()
     }

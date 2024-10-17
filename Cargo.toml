@@ -16,3 +16,4 @@ thiserror = "1.0.64"
 envconfig = "0.11.0"
 dotenvy = { version = "0.15.7" }
 tower-http = { version = "0.6.1", features = ["cors"] }
+http = "1.1.0"

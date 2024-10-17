@@ -18,6 +18,7 @@ use envconfig::Envconfig;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
+use crate::helper::shutdown_signal;
 
 #[tokio::main]
 async fn main() {
@@ -42,5 +43,5 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
 
     let listener = TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app).with_graceful_shutdown(shutdown_signal()).await.unwrap();
 }
