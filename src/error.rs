@@ -1,6 +1,6 @@
+use crate::helper::create_response;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::Json;
 
 #[derive(thiserror::Error, Debug)]
 pub enum CustomError {
@@ -24,6 +24,9 @@ pub enum CustomError {
 
     #[error("Recipe Not Found")]
     RecipeNotFound,
+
+    #[error("Route Not Found")]
+    RouteNotFound,
 }
 
 impl IntoResponse for CustomError {
@@ -36,10 +39,15 @@ impl IntoResponse for CustomError {
             CustomError::FailedGetRecipe => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::FailedGetRecipes => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::RecipeNotFound => StatusCode::NOT_FOUND,
+            CustomError::RouteNotFound => StatusCode::NOT_FOUND,
         };
 
         let error_message = self.to_string();
 
-        (status, Json(error_message)).into_response()
+        create_response::<()>(status, None, &error_message)
     }
+}
+
+pub async fn handler_404() -> impl IntoResponse {
+    Err::<(), CustomError>(CustomError::RouteNotFound)
 }

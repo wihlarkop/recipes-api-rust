@@ -19,6 +19,7 @@ use envconfig::Envconfig;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
+use crate::error::handler_404;
 
 #[tokio::main]
 async fn main() {
@@ -38,6 +39,7 @@ async fn main() {
             get(get_recipe).put(update_recipe).delete(delete_recipe),
         )
         .layer(cors)
+        .fallback(handler_404)
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
